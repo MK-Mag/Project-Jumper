@@ -24,10 +24,10 @@ var listCmd = &cobra.Command{
 		}
 		defer db.Close()
 
-		rows, err := db.Query("SELECR name,path,created_at FROM projects ORDER BY name,")
+		rows, err := db.Query("SELECT name,path,created_at FROM projects ORDER BY name")
 
 		if err != nil {
-			return fmt.Errorf("query projects: %w", err)                            // L30
+			return fmt.Errorf("query projects: %w", err)
 		}
 		defer rows.Close()
 
