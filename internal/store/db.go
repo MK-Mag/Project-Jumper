@@ -24,7 +24,7 @@ func Open() (*sql.DB, error) {
 
 	db, err := sql.Open("turso", dbPath)
 	if err != nil {
-		return nil, fmt.Errorf("Open DB :%W", err)
+		return nil, fmt.Errorf("Open DB :%w", err)
 	}
 
 	if err := db.Ping(); err != nil {
@@ -34,7 +34,7 @@ func Open() (*sql.DB, error) {
 
 	const schema = `
 		CREATE TABLE IF NOT EXISTS projects(
-			id INTEGER PRIMART KEY,
+			id INTEGER PRIMARY KEY,
 			name TEXT NOT NULL UNIQUE,
 			path TEXT NOT NULL,
 			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -46,5 +46,5 @@ func Open() (*sql.DB, error) {
 		return nil, fmt.Errorf("create table: %w", err)
 	}
 
-	return nil, nil
+	return db, nil
 }

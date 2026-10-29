@@ -24,12 +24,11 @@ var listCmd = &cobra.Command{
 		}
 		defer db.Close()
 
-		rows, err := db.Query("SELECR name,path,created_at FROM project ORDER BY name,")
+		rows, err := db.Query("SELECR name,path,created_at FROM projects ORDER BY name,")
 
 		if err != nil {
-			fmt.Errorf("query projects: %w", err)
+			return fmt.Errorf("query projects: %w", err)                            // L30
 		}
-
 		defer rows.Close()
 
 		w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 4, 2, ' ', 0)

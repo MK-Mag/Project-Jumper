@@ -43,7 +43,7 @@ var addCmd = &cobra.Command{
 		}
 		defer db.Close()
 
-		_, err = db.Exec("INSERT INTO project (name,path) VALUES (?,?)", name, abspath)
+		_, err = db.Exec("INSERT INTO projects (name,path) VALUES (?,?)", name, abspath)
 
 		if err != nil {
 			return fmt.Errorf("save project %q: %w", name, err)
