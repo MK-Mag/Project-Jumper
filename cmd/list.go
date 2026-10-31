@@ -24,29 +24,22 @@ var listCmd = &cobra.Command{
 		}
 		defer db.Close()
 
-		rows, err := db.Query("SELECT name,path,created_at FROM projects ORDER BY name")
-
-		if err != nil {
-			return fmt.Errorf("query projects: %w", err)
-		}
-		defer rows.Close()
-
 		w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 4, 2, ' ', 0)
 		fmt.Fprintln(w, "NAME\tPATH\tCREATED AT")
 
-		for rows.Next() {
-			var name, path, createdAt string
-
-			if err := rows.Scan(&name, &path, &createdAt); err != nil {
-				return fmt.Errorf("read project: %w", err)
-			}
-
-			fmt.Fprintf(w, "%s\t%s\t%s\n", name, path, createdAt)
-
+		projects, err := store.ListProjects(db)
+		if err != nil {
+			return err
 		}
 
-		if err := rows.Err(); err != nil {
-			return fmt.Errorf("read project: %w", err)
+		for _, project := range projects {
+			fmt.Fprintf(
+				w,
+				"%s\t%s\t%s\n",
+				project.Name,
+				project.Path,
+				project.CreatedAt,
+			)
 		}
 
 		return w.Flush()

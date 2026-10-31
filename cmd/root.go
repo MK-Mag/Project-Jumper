@@ -11,7 +11,7 @@ import (
 
 var rootCmd = &cobra.Command{
 
-	Use:   "PJ",
+	Use:   "pj",
 	Short: "Jump to your saved project locations",
 	Long:  "Pj is CLI tool to save, manage, and open project directories.",
 }
