@@ -1,6 +1,3 @@
-/*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -22,8 +19,15 @@ var addCmd = &cobra.Command{
 		name := args[0]
 		projpath := args[1]
 
-		info, err := os.Stat(projpath)
+		if projpath == "here" {
+			cwd, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("failed to get current directory: %w", err)
+			}
+			projpath = cwd
+		}
 
+		info, err := os.Stat(projpath)
 		if err != nil {
 			return fmt.Errorf("os.Stat: %w", err)
 		}

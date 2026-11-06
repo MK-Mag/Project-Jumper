@@ -22,7 +22,7 @@ func GetProject(db *sql.DB, name string) (Project, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		return Project{}, fmt.Errorf("project %q not found", name)
 	}
-	
+
 	if err != nil {
 		return Project{}, fmt.Errorf("failed to get Project: %w", err)
 	}
@@ -66,6 +66,24 @@ func AddProject(db *sql.DB, name, path string) error {
 
 	if err != nil {
 		return fmt.Errorf("failed to add Project: %w", err)
+	}
+
+	return nil
+}
+
+func RemoveProject(db *sql.DB, name string) error {
+	result,err:=db.Exec("DELETE FROM projects WHERE name = ?", name)
+	if err !=nil{
+		return fmt.Errorf("failed to remove Project: %w", err)
+	}
+
+	rowsAffected,err :=result.RowsAffected()
+	if err != nil{
+		return fmt.Errorf("failed to check removed project: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("project %q not found", name)
 	}
 
 	return nil
