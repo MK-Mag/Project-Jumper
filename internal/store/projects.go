@@ -2,51 +2,70 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 )
 
-type project struct {
+type Project struct {
 	Name      string
 	Path      string
 	CreatedAt string
 }
 
-func ListProjects(db *sql.DB) ([]project, error) {
+func GetProject(db *sql.DB, name string) (Project, error) {
 
-	rows, err := db.Query("SELECT name,path,created_at FROM projects ORDER BY name")
+	row := db.QueryRow("SELECT name,path,created_at FROM Projects WHERE name = ?", name)
+
+	var project Project
+	err := row.Scan(&project.Name, &project.Path, &project.CreatedAt)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return Project{}, fmt.Errorf("project %q not found", name)
+	}
+	
 	if err != nil {
-		return nil, fmt.Errorf("failed to list projects: %w", err)
+		return Project{}, fmt.Errorf("failed to get Project: %w", err)
+	}
+
+	return project, nil
+}
+
+func ListProjects(db *sql.DB) ([]Project, error) {
+
+	rows, err := db.Query("SELECT name,path,created_at FROM Projects ORDER BY name")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list Projects: %w", err)
 	}
 	defer rows.Close()
 
-	var projects []project
+	var Projects []Project
 
 	for rows.Next() {
-		var project project
+		var Project Project
 
 		if err := rows.Scan(
-			&project.Name,
-			&project.Path,
-			&project.CreatedAt,
+			&Project.Name,
+			&Project.Path,
+			&Project.CreatedAt,
 		); err != nil {
-			return nil, fmt.Errorf("failed to scan project: %w", err)
+			return nil, fmt.Errorf("failed to scan Project: %w", err)
 		}
 
-		projects = append(projects, project)
+		Projects = append(Projects, Project)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("read projects: %w", err)
+		return nil, fmt.Errorf("read Projects: %w", err)
 	}
 
-	return projects, nil
+	return Projects, nil
 }
 
 func AddProject(db *sql.DB, name, path string) error {
-	_, err := db.Exec("INSERT INTO projects (name,path) VALUES (?,?)", name, path)
+	_, err := db.Exec("INSERT INTO Projects (name,path) VALUES (?,?)", name, path)
 
 	if err != nil {
-		return fmt.Errorf("failed to add project: %w", err)
+		return fmt.Errorf("failed to add Project: %w", err)
 	}
 
 	return nil
