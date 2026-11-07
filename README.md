@@ -1,208 +1,229 @@
 # Project Jumper
 
-A tiny Windows CLI that remembers where your projects live and opens them in your configured editor with one command.
+A lightweight Windows CLI that remembers where your projects are and opens them in your configured editor with a single command.
 
-Instead of typing \`cd C:\Users\you\Documents\work\some-project\` and then \`code .\`, you register the folder once under a short name and jump straight into it afterwards.
+Instead of typing a long directory path and then launching your editor, register a project once with a short name:
 
-\`\`\`
-> pj add api here
-Saved project "api"
-Path: C:\Users\you\Documents\work\api
-
-> pj jump api
-\`\`\`
+```powershell
+pj add api here
+pj jump api
+```
 
 ## Features
 
-- **Named project registry** — give every project a short, memorable alias.
-- **\`here\` shortcut** — register the directory you are currently standing in without pasting its path.
-- **One-word launch** — \`pj jump <name>\` opens the project in your configured editor.
-- **Tab-aligned listing** — \`pj list\` shows name, path and creation time for everything you saved.
-- **Project removal** — \`pj remove <name>\` removes a saved project from the registry without deleting its folder.
-- **Configurable editor** — point it at \`code\`, \`idea64\`, \`subl\`, or any executable on your \`PATH\`.
-- **Zero setup** — the data directory and database schema are created automatically on first use.
+- **Named project registry** — save projects under short, memorable names.
+- **Current-folder shortcut** — use `here` to register the directory you're currently in.
+- **Quick project launch** — run `pj jump <project_name>` to open a project in your configured editor.
+- **Project listing** — use `pj list` to view saved project names, paths, and creation times.
+- **Safe removal** — remove a project from PJ's registry without deleting its actual files.
+- **Configurable editor** — use an editor command such as `code`, `idea64`, or another executable available on your `PATH`.
+- **Automatic setup** — PJ creates its application-data directory and database table on first run.
 
 ## Requirements
 
-- Go 1.27 or newer (only needed to build from source)
-- Windows (paths and application data are handled through \`%LOCALAPPDATA%\`)
+- Windows
+- Go 1.27 or newer, only if building from source
 
 ## Installation
 
-### Option 1: Download a release (recommended)
+### Option 1: Download a release
 
-1. Open the [GitHub Releases](https://github.com/MK-Mag/Project-Jumper/releases) page.
-2. Download \`pj.exe\` from the latest release, if a Windows executable is available.
-3. Open PowerShell in the folder where you downloaded the executable and move it into a tools folder:
+1. Visit the [GitHub Releases](https://github.com/MK-Mag/Project-Jumper/releases) page.
+2. Download `pj.exe` from the latest release, if a Windows executable is provided.
+3. Open PowerShell in the directory where you downloaded the file.
+4. Move the executable into your local Programs directory:
 
-\`\`\`powershell
+```powershell
 New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\Programs" | Out-Null
 Move-Item .\pj.exe "$env:LOCALAPPDATA\Programs\pj.exe"
-\`\`\`
+```
 
 ### Option 2: Build from source
 
-Install Go 1.27 or newer, then clone and build the project:
+Install Go 1.27 or newer, then run these commands in PowerShell:
 
-\`\`\`powershell
+```powershell
 git clone https://github.com/MK-Mag/Project-Jumper.git
-cd Project-Jumper
+Set-Location Project-Jumper
 go build -o pj.exe .
-\`\`\`
+```
 
-Move the generated \`pj.exe\` into the tools folder:
+Move the generated executable into your local Programs directory:
 
-\`\`\`powershell
+```powershell
 New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\Programs" | Out-Null
 Move-Item .\pj.exe "$env:LOCALAPPDATA\Programs\pj.exe"
-\`\`\`
+```
 
-### Add PJ to PATH
+### Add PJ to your PATH
 
-Moving the executable into \`%LOCALAPPDATA%\Programs\` does **not** automatically make the \`pj\` command available. Add that folder to your user PATH once.
+Putting `pj.exe` in `%LOCALAPPDATA%\Programs` does not automatically make the `pj` command available in every terminal. Add that directory to your **user PATH** once by running:
 
-Run this in PowerShell:
-
-\`\`\`powershell
+```powershell
 $programs = "$env:LOCALAPPDATA\Programs"
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
 
 if (($userPath -split ";") -notcontains $programs) {
-    $newPath = if ([string]::IsNullOrWhiteSpace($userPath)) { $programs } else { "$userPath;$programs" }
+    $newPath = if ([string]::IsNullOrWhiteSpace($userPath)) {
+        $programs
+    } else {
+        "$userPath;$programs"
+    }
+
     [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
 }
-\`\`\`
+```
 
-Close and reopen your terminal so it picks up the updated PATH.
+Close and reopen PowerShell (or your terminal) so it loads the updated PATH.
 
-Verify the installation:
+Check that PJ is available:
 
-\`\`\`powershell
+```powershell
 pj --help
 pj list
-\`\`\`
+```
 
-If you do not want to edit PATH, run PJ using its full path, for example:
+If you prefer not to modify PATH, run the executable using its full path:
 
-\`\`\`powershell
+```powershell
 & "$env:LOCALAPPDATA\Programs\pj.exe" --help
-\`\`\`
+```
 
 ## Usage
 
-### \`pj add <project_name> <project_path>\`
+### Add a project
 
-Registers a project. The path must already exist and must be a directory; it is stored as an absolute path, so relative paths are resolved for you.
+```text
+pj add <project_name> <project_path>
+```
 
-\`\`\`bat
-:: Register an existing folder by path
+Register an existing directory. PJ stores its absolute path; relative paths are resolved from the current directory.
+
+```powershell
+# Register a project using its path
 pj add api C:\Users\you\Documents\work\api
 
-:: Register the folder you are currently in
-cd C:\Users\you\Documents\work\api
+# Register the directory you're currently in
+Set-Location C:\Users\you\Documents\work\api
 pj add api here
-\`\`\`
+```
 
-Project names are unique. Adding a name that already exists reports an error rather than overwriting the old entry.
+Project names must be unique. PJ reports an error if you try to add a name that is already registered.
 
-### \`pj jump <project_name>\`
+### Jump to a project
 
-Looks up the project and launches your editor with its path as the working folder argument — roughly \`code C:\Users\you\Documents\work\api\`.
+```text
+pj jump <project_name>
+```
 
-\`\`\`bat
+Finds the saved project and launches your configured editor with the project's path:
+
+```powershell
 pj jump api
-\`\`\`
+```
 
-A child process cannot change your shell's working directory, so \`jump\` hands the folder to your editor instead of trying to \`cd\`. If you want the path for your own \`cd\`, read it from \`pj list\`.
+A CLI child process cannot change the working directory of the terminal that launched it. For that reason, `pj jump` opens the project in your editor rather than changing your shell's directory.
 
-### \`pj list\`
+### List projects
 
-Prints every saved project, ordered by name:
+```text
+pj list
+```
 
-\`\`\`
-NAME  PATH                                    CREATED AT
-api   C:\Users\you\Documents\work\api         2026-03-14 09:41:22
-pj    C:\Users\you\Documents\my projects\...  2026-03-14 09:38:05
-\`\`\`
+Displays all registered projects, sorted by name, along with their paths and creation times.
 
-### \`pj remove <project_name>\`
+### Remove a project
 
-Removes a project from Project Jumper's registry.
+```text
+pj remove <project_name>
+```
 
-**Important:** this only removes the saved project entry from PJ's database. It does **not** delete the actual project directory or any of its files.
+Removes a project from Project Jumper's registry:
 
-\`\`\`bat
+```powershell
 pj remove api
-Removed project "api"
-\`\`\`
+```
 
-If you want to use the project with PJ again, register it with \`pj add\`.
+**This does not delete the project directory or any of its files.** It only removes the saved entry from PJ's database. You can register the project again later with `pj add`.
 
-### \`pj config ide [name]\`
+### Configure your editor
 
-Shows or changes the editor used by \`pj jump\`. With no argument it prints the current value; with one it saves the new value. Defaults to \`code\`.
+Show or change the editor used by `pj jump`:
 
-\`\`\`bat
-:: Show the current editor
+```text
+pj config ide [name]
+```
+
+With no name, PJ displays the current editor. Provide a name to change it. The default editor is `code`.
+
+```powershell
+# Display the current editor
 pj config ide
-Current editor: code
 
-:: Switch to another editor on your PATH
+# Set the editor command
 pj config ide idea64
-\`\`\`
+```
 
-## Where things are stored
+The editor command must be available on your `PATH`, or otherwise be specified in a way Windows can launch.
 
-Everything lives under \`%LOCALAPPDATA%\PJ\\\`, which is created on first run:
+## Where PJ stores data
 
-| Path | Purpose |
+PJ stores its data in:
+
+```text
+%LOCALAPPDATA%\PJ\
+```
+
+The directory is created automatically when PJ first runs.
+
+| File | Purpose |
 | --- | --- |
-| \`PJ\PJ.db\` | SQLite database holding the registered projects |
-| \`PJ\config.json\` | Settings, currently the editor name |
+| `PJ.db` | SQLite-compatible database containing registered projects |
+| `config.json` | Configuration settings, including the editor command |
 
-The database contains a single \`projects\` table (\`id\`, \`name\`, \`path\`, \`created_at\`) and is created with \`CREATE TABLE IF NOT EXISTS\`, so it upgrades in place. Deleting the folder resets the tool completely.
+The database contains a `projects` table with the project ID, name, path, and creation time. The table is created automatically if it does not exist.
 
-\`config.json\` is plain JSON and safe to edit by hand:
+The configuration file is plain JSON. For example:
 
-\`\`\`json
+```json
 {
   "IDE": "code"
 }
-\`\`\`
+```
 
-## Project layout
+Deleting the `%LOCALAPPDATA%\PJ\` directory removes PJ's local registry and settings. It does not remove the project directories registered in PJ.
 
-\`\`\`
+## Project structure
+
+```text
 .
-├── cmd/                  Cobra commands
-│   ├── root.go           Root command and entry point for Execute
-│   ├── add.go            pj add
-│   ├── jump.go           pj jump
-│   ├── list.go           pj list
-│   ├── remove.go         pj remove
-│   └── config.go         pj config ide
+├── cmd/                  # Cobra commands
+│   ├── root.go           # Root command
+│   ├── add.go            # pj add
+│   ├── jump.go           # pj jump
+│   ├── list.go           # pj list
+│   ├── remove.go         # pj remove
+│   └── config.go         # pj config
 ├── internal/
-│   ├── Config/           Load and save config.json
-│   └── store/            Database opening, schema, and project queries
+│   ├── Config/           # Load and save configuration
+│   └── store/            # Database setup and project queries
 ├── main.go
 └── go.mod
-\`\`\`
+```
 
-Commands only handle arguments and output; all persistence lives in \`internal/store\` and all settings access in \`internal/Config\`.
+The `cmd` package handles CLI commands and user-facing output. Database operations live in `internal/store`, while editor settings are handled by `internal/Config`.
 
 ## Tech stack
 
-- [Cobra](https://github.com/spf13/cobra) — command and flag structure
-- [Turso Go driver](https://turso.tech) — embedded SQLite-compatible database via \`database/sql\`
+- [Cobra](https://github.com/spf13/cobra) — CLI commands and argument handling.
+- [Turso Go driver](https://turso.tech) — embedded SQLite-compatible database through Go's `database/sql` package.
 
 ## Contributing
 
-Issues and pull requests are welcome. If you plan a change that adds a command, follow the existing pattern: one file in \`cmd/\`, a package-level \`cobra.Command\`, and an \`init()\` that attaches it to \`rootCmd\`.
+Issues and pull requests are welcome. When adding a command, follow the existing structure: create a command file in `cmd/`, define a `cobra.Command`, and attach it to the root command.
 
 ## License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full text.
+Project Jumper is licensed under the [Apache License, Version 2.0](LICENSE).
 
-In short: you may use, modify and redistribute this project, including in commercial closed-source software, provided you keep a copy of the license with it, retain the existing attribution notices, and mark any files you change.
-
-You can obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
+You may use, modify, and redistribute the project, including in commercial software, subject to the terms of the license. See the license file for the full terms.
