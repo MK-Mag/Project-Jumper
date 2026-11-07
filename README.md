@@ -1,5 +1,7 @@
 # Project Jumper
 
+> **Project status: Completed** — The core CLI features are implemented and tested, including project registration, listing, launching projects in a configurable editor, and removing saved entries.
+
 A lightweight Windows CLI that remembers where your projects are and opens them in your configured editor with a single command.
 
 Instead of typing a long directory path and then launching your editor, register a project once with a short name:
@@ -16,7 +18,7 @@ pj jump api
 - **Quick project launch** — run `pj jump <project_name>` to open a project in your configured editor.
 - **Project listing** — use `pj list` to view saved project names, paths, and creation times.
 - **Safe removal** — remove a project from PJ's registry without deleting its actual files.
-- **Configurable editor** — use an editor command such as `code`, `idea64`, or another executable available on your `PATH`.
+- **Configurable editor** — use an editor command such as `code`, `qoder`, or another executable available on your `PATH`.
 - **Automatic setup** — PJ creates its application-data directory and database table on first run.
 
 ## Requirements
@@ -161,7 +163,7 @@ With no name, PJ displays the current editor. Provide a name to change it. The d
 pj config ide
 
 # Set the editor command
-pj config ide idea64
+pj config ide qoder
 ```
 
 The editor command must be available on your `PATH`, or otherwise be specified in a way Windows can launch.
